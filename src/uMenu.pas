@@ -244,10 +244,12 @@ begin
 
   CriarItemMenuPrincipal(sSEPARADOR, 'Separador2', nil);
 
-  CriarItemMenuPrincipal('Compilar Projetos Componentes', 'CompilarComponente', FoFuncoes.CompilarProjetosComponentes);
-  CriarItemMenuPrincipal('Compilar Projetos Cliente', 'CompilarCliente', FoFuncoes.CompilarProjetosClientes);
-  CriarItemMenuPrincipal('Compilar Projetos Servidor', 'CompilarServidor', FoFuncoes.CompilarProjetosServidores);
-  CriarItemMenuPrincipal('Compilar Todos', 'CompilarTodos', FoFuncoes.CompilarTodosProjetos);
+  CriarItemMenuPrincipal('Compilação PRC / SG5 / MP', 'CompilacaoModulos', nil);
+  CriarItemMenuPrincipal('Compilar Pacotes Componentes', 'CompilarComponente', FoFuncoes.CompilarPacotesComponentes, 'CompilacaoModulos');
+  CriarItemMenuPrincipal('Compilar Projetos Cliente', 'CompilarCliente', FoFuncoes.CompilarProjetosClientes, 'CompilacaoModulos');
+  CriarItemMenuPrincipal('Compilar Projetos Servidor', 'CompilarServidor', FoFuncoes.CompilarProjetosServidores, 'CompilacaoModulos');
+  CriarItemMenuPrincipal('Compilar Todos', 'CompilarTodos', FoFuncoes.CompilarTodosProjetos, 'CompilacaoModulos');
+
   CriarItemMenuPrincipal('Compilação Personalizada', 'CompilacaoPersonalizada', FoFuncoes.CompilacaoPersonalizada);
 
   CriarItemMenuPrincipal(sSEPARADOR, 'Separador3', nil);
