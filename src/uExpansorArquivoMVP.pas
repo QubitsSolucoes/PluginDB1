@@ -312,6 +312,7 @@ procedure TExpansorArquivoMVP.SetDiretorioBase(const Value: string);
 begin
   FsDiretorioBase := Value;
   FsDiretorioBase := RemoverUmSubDiretorio(FsDiretorioBase);
+  FsDiretorioBase := RemoverUmSubDiretorio(FsDiretorioBase);
 end;
 
 procedure TExpansorArquivoMVP.SetTipoArquivo(const Value: TenTipoArquivoMVP);
