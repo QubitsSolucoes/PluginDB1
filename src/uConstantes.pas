@@ -72,7 +72,7 @@ const
     'https://clm.unj.softplan.com.br/ccm/web/projects/Tribunais#action=com.ibm.team.workitem.search&q=%s';
 
   sURL_DOCUMENTACAO_DELPHI =
-    'http://docwiki.embarcadero.com/RADStudio/Berlin/e/index.php?search=%s';
+    'http://docwiki.embarcadero.com/RADStudio/Tokyo/e/index.php?search=%s';
 
   sURL_DOCUMENTACAO_SP4 =
     'http://jenkins/view/Suporte%%20Interno/view/3%%20-%%20Noturno/job/SIU_DEVELOPMENT_NOTURNO_METRICAS/lastSuccessfulBuild/artifact/Artifacts/NOTURNO/Metrics/pasdoc/_tipue_results.html?q=%s';
