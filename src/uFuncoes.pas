@@ -11,6 +11,7 @@ type
     FoToolsAPIUtils: TToolsAPIUTils;
     FoExpansorArquivoMVP: TExpansorArquivoMVP;
     FenTipoSistema: TTipoSistema;
+    FslLog: TStringList;
 
     function LerDoArquivoINI(const psSecao, psChave: string): string;
     function PegarNomeSistemaSelecionado: string;
@@ -38,6 +39,7 @@ type
     procedure ConfigurarBaseSqlServer(const pslBase: TStringList);
     procedure ConfigurarBaseDB2(const pslBase: TStringList);
     procedure ExecutarNieuport(const psTipoBanco, psAlias, psIp: string);
+    procedure EscreverNoLog(const psTexto: string);
     function PegarDescricaoSistema: string;
   public
     constructor Create;
@@ -63,12 +65,12 @@ type
     // compilação
     procedure CompilarProjetosClientes(Sender: TObject);
     procedure CompilarProjetosServidores(Sender: TObject);
-    procedure CompilarProjetosComponentes(Sender: TObject);
+    procedure CompilarPacotesComponentes(Sender: TObject);
     procedure CompilarTodosProjetos(Sender: TObject);
     procedure CompilacaoPersonalizada(Sender: TObject);
-    procedure CompilarProjetosComponentesPG;
-    procedure CompilarProjetosComponentesMP;
-    procedure CompilarProjetosComponentesSG;
+    procedure CompilarPacotesComponentesPG;
+    procedure CompilarPacotesComponentesMP;
+    procedure CompilarPacotesComponentesSG;
     procedure CompilarProjetosClientesPG;
     procedure CompilarProjetosClientesMP;
     procedure CompilarProjetosClientesSG;
@@ -125,12 +127,14 @@ begin
   inherited;
 
   FoToolsAPIUtils := TToolsAPIUtils.Create; //PC_OK
+  FslLog := TStringList.Create; //PC_OK
   PegarSistemaPadrao;
 end;
 
 destructor TFuncoes.Destroy;
 begin
   FreeAndNil(FoToolsAPIUtils); //PC_OK
+  FreeAndNil(FslLog); //PC_OK
   inherited;
 end;
 
@@ -153,7 +157,9 @@ end;
 
 procedure TFuncoes.CarregarArquivoDataSet;
 begin
+  EscreverNoLog('Abrindo visualizador de DataSets');
   FoToolsAPIUtils.AbrirArquivo(sPATH_VISUALIZADOR_AUTO, EmptyStr);
+  EscreverNoLog('Visualizador de DataSets carregado');
 end;
 
 function TFuncoes.SalvarArquivoDataSet(const psNomeDataSet, psNomeArquivo: string): boolean;
@@ -163,14 +169,17 @@ var
   oThread: IOTAThread;
   oRetorno: TOTAEvaluateResult;
 begin
+  EscreverNoLog('Iniciando método principal (SalvarArquivoDataSet)');
   oThread := FoToolsAPIUtils.PegarThreadAtual;
   try
     sExpressao := Format('%s.SaveToFile(''%s'')', [psNomeDataSet, psNomeArquivo]);
+    EscreverNoLog('Expressão: ' + sExpressao);
     oRetorno := FoToolsAPIUtils.ExecutarEvaluate(oThread, sExpressao, sResultado);
     result := oRetorno in [erOK, erDeferred];
   finally
     FreeAndNil(oThread); //PC_OK
   end;
+  EscreverNoLog('Finalizando método principal (SalvarArquivoDataSet)');
 end;
 
 function TFuncoes.SalvarFiltroDataSet(const psNomeDataSet: string): string;
@@ -184,18 +193,23 @@ begin
   sResultado := EmptyStr;
   try
     sExpressao := Format('%s.Filter', [psNomeDataSet]);
+    EscreverNoLog('Salvando o filtro do DataSet: ' + sExpressao);
     oRetorno := FoToolsAPIUtils.ExecutarEvaluate(oThread, sExpressao, sResultado);
   finally
     FreeAndNil(oThread); //PC_OK
   end;
 
   if oRetorno = erError then
+  begin
+    FoToolsAPIUtils.Aviso('Ocorreu um erro ao salvar o filtro do DataSet.');
     Exit;
+  end;
 
   if Trim(StringReplace(sResultado, '''', '', [rfReplaceAll])) = EmptyStr then
     Exit;
 
   result := sResultado;
+  EscreverNoLog('Filtro: ' + result);
 end;
 
 procedure TFuncoes.VisualizarDataSetManual(Sender: TObject);
@@ -249,16 +263,24 @@ var
   slPropriedades: TStringList;
 begin
   if Trim(psNomeDataSet) = EmptyStr then
+  begin
+    EscreverNoLog('O DataSet não está selecionado');
     Exit;
+  end;
 
   if not VerificarExisteThreadProcesso then
+  begin
+    EscreverNoLog('Não existe thread no debug atual');
     Exit;
+  end;
 
   oFormAguarde := TfAguarde.Create(nil);
   slPropriedades := TStringList.Create;
   try
+    EscreverNoLog('Excluindo arquivos antigos');
     ExcluirArquivo(sPATH_ARQUIVO_DADOS);
     ExcluirArquivo(sPATH_PROP_DATASET);
+    EscreverNoLog('Arquivos excluídos');
 
     VerificarDataSetEstaAssigned(psNomeDataSet);
     VerificarDataSetEstaAtivo(psNomeDataSet);
@@ -271,9 +293,13 @@ begin
     slPropriedades.Add(SalvarIndicesDataSet(psNomeDataSet));
     slPropriedades.Add(SalvarClasseDataSet(psNomeDataSet));
     slPropriedades.SaveToFile(sPATH_PROP_DATASET);
+    EscreverNoLog('Propriedades do DataSet exportadas para o arquivo ' + sPATH_PROP_DATASET);
 
     if SalvarArquivoDataSet(psNomeDataSet, sPATH_ARQUIVO_DADOS) then
       CarregarArquivoDataSet;
+
+    FslLog.SaveToFile('C:\PluginDB1\LogProcessamentoDataSet.txt');
+    FslLog.Clear;
   finally
     oFormAguarde.Close;
     FreeAndNil(slPropriedades);
@@ -479,6 +505,7 @@ begin
   oThread := FoToolsAPIUtils.PegarThreadAtual;
   try
     sExpressao := Format('Assigned(%s)', [psNomeDataSet]);
+    EscreverNoLog('Verificando se o DataSet está assigned: ' + sExpressao);
     oRetorno := FoToolsAPIUtils.ExecutarEvaluate(oThread, sExpressao, sResultado);
 
     if not (oRetorno in [erOK, erDeferred]) then
@@ -504,6 +531,7 @@ begin
   oThread := FoToolsAPIUtils.PegarThreadAtual;
   try
     sExpressao := Format('%s.State', [psNomeDataSet]);
+    EscreverNoLog('Verificando se o DataSet está ativo: ' + sExpressao);
     oRetorno := FoToolsAPIUtils.ExecutarEvaluate(oThread, sExpressao, sResultado);
 
     if (oRetorno <> erOK) or (sResultado = 'dsInactive') then
@@ -589,6 +617,7 @@ begin
   oThread := FoToolsAPIUtils.PegarThreadAtual;
   try
     sExpressao := Format('%s.State', [psNomeDataSet]);
+    EscreverNoLog('Verificando se o DataSet está em modo de navegação: ' + sExpressao);
     oRetorno := FoToolsAPIUtils.ExecutarEvaluate(oThread, sExpressao, sResultado);
 
     bEstaEmModoInsercao := sResultado = 'dsInsert';
@@ -636,18 +665,23 @@ begin
   sResultado := EmptyStr;
   try
     sExpressao := Format('%s.IndexFieldNames', [psNomeDataSet]);
+    EscreverNoLog('Salvando índices do DataSet: ' + sExpressao);
     oRetorno := FoToolsAPIUtils.ExecutarEvaluate(oThread, sExpressao, sResultado);
   finally
     FreeAndNil(oThread); //PC_OK
   end;
 
   if oRetorno = erError then
+  begin
+    FoToolsAPIUtils.Aviso('Ocorreu um erro ao salvar os índices do DataSet.');
     Exit;
+  end;
 
   if Trim(StringReplace(sResultado, '''', '', [rfReplaceAll])) = EmptyStr then
     Exit;
 
   result := sResultado;
+  EscreverNoLog('Índices: ' + result);
 end;
 
 procedure TFuncoes.AbrirArquivoMVP(const pnIndiceMenu: integer);
@@ -688,12 +722,12 @@ begin
   end;
 end;
 
-procedure TFuncoes.CompilarProjetosComponentes(Sender: TObject);
+procedure TFuncoes.CompilarPacotesComponentes(Sender: TObject);
 begin
   case FenTipoSistema of
-    tsPG: CompilarProjetosComponentesPG;
-    tsMP: CompilarProjetosComponentesMP;
-    tsSG: CompilarProjetosComponentesSG;
+    tsPG: CompilarPacotesComponentesPG;
+    tsMP: CompilarPacotesComponentesMP;
+    tsSG: CompilarPacotesComponentesSG;
   end;
 end;
 
@@ -766,18 +800,23 @@ begin
   sResultado := EmptyStr;
   try
     sExpressao := Format('%s.ClassName', [psNomeDataSet]);
+    EscreverNoLog('Salvando a classe do DataSet: ' + sExpressao);
     oRetorno := FoToolsAPIUtils.ExecutarEvaluate(oThread, sExpressao, sResultado);
   finally
     FreeAndNil(oThread); //PC_OK
   end;
 
   if oRetorno = erError then
+  begin
+    FoToolsAPIUtils.Aviso('Ocorreu um erro ao salvar a classe do DataSet.');
     Exit;
+  end;
 
   if Trim(StringReplace(sResultado, '''', '', [rfReplaceAll])) = EmptyStr then
     Exit;
 
   result := sResultado;
+  EscreverNoLog('Classe: ' + result);
 end;
 
 procedure TFuncoes.TestarSpSelect(Sender: TObject);
@@ -874,12 +913,19 @@ var
   oGrupoProjetos: IOTAProjectGroup;
   nContador: byte;
   sUltimoProjetoSelecionado: string;
+  sUltimaConfiguracao: string;
+  sFiltrosProjetos: string;
   bEsperarPorOK: boolean;
 begin
+  sUltimaConfiguracao := Self.LerDoArquivoINI('Parametros', 'UltimaConfiguracaoCompilacao');
+  sFiltrosProjetos := Self.LerDoArquivoINI('Parametros', 'FiltrosCompilacaoPersonalizada');
+
   fCompilacao := TfCompilacao.Create(nil);
   slProjetos := TStringList.Create;
   try
     fCompilacao.Funcoes := Self;
+    fCompilacao.Filtro := sFiltrosProjetos;
+    fCompilacao.UltimaConfiguracao := sUltimaConfiguracao;
     fCompilacao.ShowModal;
 
     if fCompilacao.ModalResult = idCancel then
@@ -887,9 +933,13 @@ begin
 
     slProjetos.CommaText := fCompilacao.PegarProjetosSelecionados;
     sUltimoProjetoSelecionado := fCompilacao.PegarUltimoProjetoMarcado;
+    sFiltrosProjetos := fCompilacao.PegarFiltrosProjetos;
 
     if slProjetos.Count = 0 then
       Exit;
+
+    Self.GravarNoArquivoINI('Parametros', 'UltimaConfiguracaoCompilacao', slProjetos.CommaText);
+    Self.GravarNoArquivoINI('Parametros', 'FiltrosCompilacaoPersonalizada', sFiltrosProjetos);
 
     oGrupoProjetos := PegarGrupoProjetos;
     for nContador := 0 to Pred(slProjetos.Count) do
@@ -924,7 +974,7 @@ var
   sNomeArquivoAtual: string;
   slLinhaComando: TStringList;
 begin
-  sNomeArquivoAtual := FoToolsAPIUtils.PegarNomeArquivoAtual;
+  sNomeArquivoAtual := ExtractFileName(FoToolsAPIUtils.PegarNomeArquivoAtual);
 
   if MessageDlg(Format('Confirma o checkout do arquivo "%s"?', [sNomeArquivoAtual]),
     mtConfirmation, [mbYes, mbNo], 0) = idNo then
@@ -941,7 +991,7 @@ begin
   end;
 end;
 
-procedure TFuncoes.CompilarProjetosComponentesPG;
+procedure TFuncoes.CompilarPacotesComponentesPG;
 var
   oGrupoProjetos: IOTAProjectGroup;
 begin
@@ -949,7 +999,7 @@ begin
   FoToolsAPIUtils.CompilarProjeto('pg5D5Completo', oGrupoProjetos, True);
 end;
 
-procedure TFuncoes.CompilarProjetosComponentesMP;
+procedure TFuncoes.CompilarPacotesComponentesMP;
 var
   oGrupoProjetos: IOTAProjectGroup;
 begin
@@ -958,7 +1008,7 @@ begin
   FoToolsAPIUtils.CompilarProjeto('fmpCompletoDT', oGrupoProjetos, True);
 end;
 
-procedure TFuncoes.CompilarProjetosComponentesSG;
+procedure TFuncoes.CompilarPacotesComponentesSG;
 var
   oGrupoProjetos: IOTAProjectGroup;
 begin
@@ -1213,6 +1263,14 @@ end;
 function TFuncoes.PegarDescricaoSistema: string;
 begin
   result := GetEnumName(TypeInfo(TTipoSistemaDesc), Ord(FenTipoSistema));
+end;
+
+procedure TFuncoes.EscreverNoLog(const psTexto: string);
+var
+  sDataHoraAtual: string;
+begin
+  sDataHoraAtual := FormatDateTime('dd/mm/yyyy hh:nn:ss', Now);
+  FslLog.Add(Format('%s:%s', [sDataHoraAtual, psTexto]));
 end;
 
 end.

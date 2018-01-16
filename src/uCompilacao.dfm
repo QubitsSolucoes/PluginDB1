@@ -1,16 +1,16 @@
 object fCompilacao: TfCompilacao
-  Left = 481
-  Top = 245
+  Left = 493
+  Top = 200
   BorderIcons = [biSystemMenu]
   BorderStyle = bsSingle
   Caption = 'Compilação Personalizada'
-  ClientHeight = 386
-  ClientWidth = 281
+  ClientHeight = 502
+  ClientWidth = 313
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
   Font.Height = -11
-  Font.Name = 'MS Sans Serif'
+  Font.Name = 'Tahoma'
   Font.Style = []
   KeyPreview = True
   OldCreateOrder = False
@@ -21,9 +21,9 @@ object fCompilacao: TfCompilacao
   TextHeight = 13
   object CheckListBoxProjetos: TCheckListBox
     Left = 0
-    Top = 28
-    Width = 281
-    Height = 317
+    Top = 47
+    Width = 313
+    Height = 414
     Align = alClient
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
@@ -33,11 +33,12 @@ object fCompilacao: TfCompilacao
     ItemHeight = 16
     ParentFont = False
     TabOrder = 1
+    OnKeyPress = CheckListBoxProjetosKeyPress
   end
   object PanelBotoes: TPanel
     Left = 0
-    Top = 345
-    Width = 281
+    Top = 461
+    Width = 313
     Height = 41
     Align = alBottom
     TabOrder = 2
@@ -81,18 +82,32 @@ object fCompilacao: TfCompilacao
   object PanelPesquisa: TPanel
     Left = 0
     Top = 0
-    Width = 281
-    Height = 28
+    Width = 313
+    Height = 47
     Align = alTop
     TabOrder = 0
+    object lbFiltroProjetos: TLabel
+      Left = 5
+      Top = 6
+      Width = 243
+      Height = 13
+      Caption = 'Filtro de Projetos (prefixos separados por vírgula):'
+    end
     object EditPesquisa: TEdit
       Left = 4
-      Top = 4
-      Width = 273
+      Top = 21
+      Width = 245
       Height = 21
       TabOrder = 0
-      OnChange = EditPesquisaChange
-      OnKeyPress = EditPesquisaKeyPress
+    end
+    object BitBtnOK: TBitBtn
+      Left = 256
+      Top = 18
+      Width = 49
+      Height = 25
+      Caption = 'OK'
+      TabOrder = 1
+      OnClick = BitBtnOKClick
     end
   end
 end

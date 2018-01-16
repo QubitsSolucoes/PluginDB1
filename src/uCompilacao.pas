@@ -13,17 +13,27 @@ type
     BitBtnCompilar: TBitBtn;
     PanelPesquisa: TPanel;
     EditPesquisa: TEdit;
+    lbFiltroProjetos: TLabel;
+    BitBtnOK: TBitBtn;
     procedure FormKeyDown(Sender: TObject; var Key: word; Shift: TShiftState);
     procedure FormShow(Sender: TObject);
-    procedure EditPesquisaChange(Sender: TObject);
-    procedure EditPesquisaKeyPress(Sender: TObject; var Key: char);
+    procedure CheckListBoxProjetosKeyPress(Sender: TObject; var Key: char);
+    procedure BitBtnOKClick(Sender: TObject);
   private
     FoFuncoes: TFuncoes;
+    FsFiltro: string;
+    FsUltimaConfiguracao: string;
+
     procedure ExibirProjetosCarregados;
+    procedure CarregarFiltros;
+    procedure CarregarUltimaConfiguracao;
   public
     property Funcoes: TFuncoes write FoFuncoes;
+    property Filtro: string write FsFiltro;
+    property UltimaConfiguracao: string write FsUltimaConfiguracao;
     function PegarUltimoProjetoMarcado: string;
     function PegarProjetosSelecionados: string;
+    function PegarFiltrosProjetos: string;
   end;
 
 var
@@ -45,15 +55,40 @@ end;
 procedure TfCompilacao.ExibirProjetosCarregados;
 var
   slProjetos: TStringList;
-  nContador: smallint;
+  slFiltro: TStringList;
+  nContadorProjetos: smallint;
+  nContadorFiltros: smallint;
+  sNomeProjeto: string;
+  bExibeProjeto: boolean;
 begin
+  CheckListBoxProjetos.Items.Clear;
+
   slProjetos := TStringList.Create;
+  slFiltro := TStringList.Create;
   try
+    slFiltro.CommaText := EditPesquisa.Text;
     slProjetos.CommaText := FoFuncoes.PegarProjetosCarregados;
 
-    for nContador := 0 to Pred(slProjetos.Count) do
-      CheckListBoxProjetos.Items.Add(slProjetos[nContador]);
+    for nContadorProjetos := 0 to Pred(slProjetos.Count) do
+    begin
+      sNomeProjeto := slProjetos[nContadorProjetos];
+      bExibeProjeto := True;
+
+      for nContadorFiltros := 0 to Pred(slFiltro.Count) do
+      begin
+        bExibeProjeto := Pos(slFiltro[nContadorFiltros], UpperCase(sNomeProjeto)) > 0;
+
+        if bExibeProjeto then
+          Break;
+      end;
+
+      if not bExibeProjeto then
+        Continue;
+
+      CheckListBoxProjetos.Items.Add(sNomeProjeto);
+    end;
   finally
+    FreeAndNil(slFiltro);
     FreeAndNil(slProjetos);
   end;
 end;
@@ -72,7 +107,9 @@ end;
 
 procedure TfCompilacao.FormShow(Sender: TObject);
 begin
+  CarregarFiltros;
   ExibirProjetosCarregados;
+  CarregarUltimaConfiguracao;
 end;
 
 function TfCompilacao.PegarProjetosSelecionados: string;
@@ -93,29 +130,7 @@ begin
   end;
 end;
 
-procedure TfCompilacao.EditPesquisaChange(Sender: TObject);
-var
-  nContador: smallint;
-begin
-  if Trim(EditPesquisa.Text) = EmptyStr then
-  begin
-    CheckListBoxProjetos.ItemIndex := 0;
-    Exit;
-  end;
-
-  for nContador := 0 to Pred(CheckListBoxProjetos.Items.Count) do
-  begin
-    // X é usado como um workaround na busca
-    if Pos(LowerCase(EditPesquisa.Text),
-      LowerCase('X' + CheckListBoxProjetos.Items[nContador])) > 0 then
-    begin
-      CheckListBoxProjetos.ItemIndex := nContador;
-      Break;
-    end;
-  end;
-end;
-
-procedure TfCompilacao.EditPesquisaKeyPress(Sender: TObject; var Key: char);
+procedure TfCompilacao.CheckListBoxProjetosKeyPress(Sender: TObject; var Key: char);
 begin
   if Key = #32 then
   begin
@@ -127,6 +142,44 @@ begin
     CheckListBoxProjetos.Checked[CheckListBoxProjetos.ItemIndex] :=
       not CheckListBoxProjetos.Checked[CheckListBoxProjetos.ItemIndex];
   end;
+end;
+
+function TfCompilacao.PegarFiltrosProjetos: string;
+begin
+  result := Trim(EditPesquisa.Text);
+end;
+
+procedure TfCompilacao.CarregarFiltros;
+begin
+  EditPesquisa.Text := FsFiltro;
+end;
+
+procedure TfCompilacao.CarregarUltimaConfiguracao;
+var
+  slUltimaConfiguracao: TStringList;
+  nContador: smallint;
+  nPosicaoProjeto: smallint;
+begin
+  slUltimaConfiguracao := TStringList.Create;
+  try
+    slUltimaConfiguracao.CommaText := FsUltimaConfiguracao;
+
+    for nContador := 0 to Pred(slUltimaConfiguracao.Count) do
+    begin
+      nPosicaoProjeto := CheckListBoxProjetos.Items.IndexOf(slUltimaConfiguracao[nContador]);
+
+      if nPosicaoProjeto >= 0 then
+        CheckListBoxProjetos.Checked[nPosicaoProjeto] := True;
+    end;
+
+  finally
+    FreeAndNil(slUltimaConfiguracao);
+  end;
+end;
+
+procedure TfCompilacao.BitBtnOKClick(Sender: TObject);
+begin
+  ExibirProjetosCarregados;
 end;
 
 end.
