@@ -59,6 +59,7 @@ var
   nContadorProjetos: smallint;
   nContadorFiltros: smallint;
   sNomeProjeto: string;
+  sFiltro: string;
   bExibeProjeto: boolean;
 begin
   CheckListBoxProjetos.Items.Clear;
@@ -76,7 +77,8 @@ begin
 
       for nContadorFiltros := 0 to Pred(slFiltro.Count) do
       begin
-        bExibeProjeto := Pos(slFiltro[nContadorFiltros], UpperCase(sNomeProjeto)) > 0;
+        sFiltro := UpperCase(slFiltro[nContadorFiltros]);
+        bExibeProjeto := Pos(sFiltro, UpperCase(sNomeProjeto)) > 0;
 
         if bExibeProjeto then
           Break;
